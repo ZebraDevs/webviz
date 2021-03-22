@@ -50,7 +50,14 @@ export type BinaryPose2D = $ReadOnly<{|
   theta(): number,
 |}>;
 
+export type BinaryPoseWithCovariance = $ReadOnly<{|
+  pose(): BinaryPose,
+  covariance(): ArrayView<number>,
+|}>;
+
 export type BinaryPoseStamped = $ReadOnly<BinaryStampedMessage & {| pose(): BinaryPose |}>;
+
+export type BinaryPoseWithCovarianceStamped = $ReadOnly<BinaryStampedMessage & {| pose(): BinaryPoseWithCovariance |}>;
 
 export type BinaryPolygon = $ReadOnly<{| points(): ArrayView<BinaryPoint> |}>;
 

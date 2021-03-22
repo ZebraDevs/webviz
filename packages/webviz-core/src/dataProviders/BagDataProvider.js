@@ -240,10 +240,9 @@ export default class BagDataProvider implements DataProvider {
     // TODO(@cjds): The hope is to one day reconcile with Webviz master. However currenty there
     // is no good support for latched messages baked into Webviz
     const onLatchedMessage = (msg) => {
+      const { data, topic } = msg;
 
-      const { data, topic, timestamp } = msg;
-
-     messages.push({
+      messages.push({
         topic,
         receiveTime: end,
         message: data.buffer.slice(data.byteOffset, data.byteOffset + data.length),
@@ -287,8 +286,8 @@ export default class BagDataProvider implements DataProvider {
     };
     // ADDED BY FETCH @cjds
     // TODO(@cjds): Read above note about latched messages
-    const LATCHED_TOPICS = ["/atlas/localization"];// copy because `topics` not readonly in rosbag
-    const latchedArray = topics.filter(value => LATCHED_TOPICS.includes(value));
+    const LATCHED_TOPICS = ["/atlas/keepout", "/atlas/localization", "/docking/targeting/annotation"]; // copy because `topics` not readonly in rosbag
+    const latchedArray = topics.filter((value) => LATCHED_TOPICS.includes(value));
 
     const latchedOptions = {
       topics: latchedArray, // copy because `topics` not readonly in rosbag

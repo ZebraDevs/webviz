@@ -16,11 +16,15 @@ import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/T
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { cast, type BobjectMessage, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
 import type {
+  BinaryPose,
+  BinaryPoseWithCovariance,
   BinaryPath,
   BinaryMarker,
   BinaryPolygonStamped,
   BinaryPoseStamped,
+  BinaryPoseWithCovarianceStamped,
   BinaryInstancedMarker,
+  BinaryHeader,
 } from "webviz-core/src/types/BinaryMessages";
 import type {
   Color,
@@ -45,7 +49,11 @@ import {
   WEBVIZ_MARKER_ARRAY_DATATYPE,
   VISUALIZATION_MSGS_MARKER_DATATYPE,
   VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE,
+  POSE_DATATYPE,
   POSE_STAMPED_DATATYPE,
+  POSE_ARRAY_DATATYPE,
+  POSE_WITH_COVARIANCE_DATATYPE,
+  POSE_WITH_COVARIANCE_STAMPED_DATATYPE,
   NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
   NAV_MSGS_PATH_DATATYPE,
   POINT_CLOUD_DATATYPE,
@@ -433,6 +441,37 @@ export default class SceneBuilder implements MarkerProvider {
       );
     }
   }
+  _transformPoseWithHeader = (topic: string, header: BinaryHeader, bpose: BinaryPose): ?MutablePose => {
+    const frame_id = header.frame_id();
+
+    if (!frame_id) {
+      const error = this._addError(this.errors.topicsMissingFrameIds, topic);
+      error.namespaces.add("poses");
+      return null;
+    }
+
+    if (frame_id === this.rootTransformID) {
+      // Transforming is a bit expensive, and this (no transformation necessary) is the common-case
+      // TODO: Need to deep-clone, callers mutate the result; fix this downstream.
+      return deepParse(bpose);
+    }
+
+    // frame_id !== this.rootTransformID.
+    // We continue to render these, though they may be inaccurate
+    this._reportBadFrameId(topic);
+    const badFrameError = this._addError(this.errors.topicsWithBadFrameIds, topic);
+    const namespace = "poses";
+    badFrameError.namespaces.add(namespace);
+    badFrameError.frameIds.add(frame_id);
+
+    const pose = this.transforms.apply(emptyPose(), deepParse(bpose), frame_id, this.rootTransformID);
+    if (!pose) {
+      const topicMissingError = this._addError(this.errors.topicsMissingTransforms, topic);
+      topicMissingError.namespaces.add(namespace);
+      topicMissingError.frameIds.add(frame_id);
+    }
+    return pose;
+  };
 
   _transformMarkerPose = (topic: string, marker: BinaryMarker | BinaryInstancedMarker): ?MutablePose => {
     const frame_id = marker.header().frame_id();
@@ -787,13 +826,81 @@ export default class SceneBuilder implements MarkerProvider {
       case VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
         this._consumeMarkerArray(topic, message);
         break;
-      case POSE_STAMPED_DATATYPE: {
-        // make synthetic arrow marker from the stamped pose
-        const pose = deepParse(cast<BinaryPoseStamped>(msg.message).pose());
+      case POSE_DATATYPE: {
+        const pose = deepParse(cast<BinaryPose>(msg.message).pose());
         this.collectors[topic].addNonMarker(
           topic,
           buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
         );
+        break;
+      }
+      case POSE_WITH_COVARIANCE_DATATYPE: {
+        const pose = deepParse(
+          cast<BinaryPoseWithCovariance>(msg.message)
+            .pose()
+            .pose()
+        );
+        this.collectors[topic].addNonMarker(
+          topic,
+          buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
+        );
+        break;
+      }
+      case POSE_WITH_COVARIANCE_STAMPED_DATATYPE: {
+        // make synthetic arrow marker from the stamped pose ignore covariance for now
+        const bpose = cast<BinaryPoseWithCovarianceStamped>(msg.message);
+        const pose = this._transformPoseWithHeader(topic, bpose.header(), bpose.pose().pose());
+        if (pose !== null) {
+          this.collectors[topic].addNonMarker(
+            topic,
+            buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
+          );
+        } else {
+          this.collectors[topic].addNonMarker(
+            topic,
+            buildSyntheticArrowMarker(msg, deepParse(bpose.pose().pose()), this._hooks.getSyntheticArrowMarkerColor)
+          );
+        }
+        break;
+      }
+      case POSE_STAMPED_DATATYPE: {
+        // make synthetic arrow marker from the stamped pose
+        const bpose_stamped = cast<BinaryPoseStamped>(msg.message);
+        const pose = this._transformPoseWithHeader(topic, bpose_stamped.header(), bpose_stamped.pose());
+        if (pose !== null) {
+          this.collectors[topic].addNonMarker(
+            topic,
+            buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
+          );
+        } else {
+          this.collectors[topic].addNonMarker(
+            topic,
+            buildSyntheticArrowMarker(msg, deepParse(bpose_stamped.pose()), this._hooks.getSyntheticArrowMarkerColor)
+          );
+        }
+        break;
+      }
+      case POSE_ARRAY_DATATYPE: {
+        // make synthetic arrow marker from all the poass
+        const lifetime = 10;
+        this.collectors[topic].deleteAll();
+        const bpose_array = cast<BinaryPoseArray>(msg.message);
+        for (const bpose of bpose_array.poses()) {
+          const pose = this._transformPoseWithHeader(topic, bpose_array.header(), bpose);
+          if (pose !== null) {
+            this.collectors[topic].addNonMarker(
+              topic,
+              buildSyntheticArrowMarker(bpose, pose, this._hooks.getSyntheticArrowMarkerColor),
+              lifetime
+            );
+          } else {
+            this.collectors[topic].addNonMarker(
+              topic,
+              buildSyntheticArrowMarker(bpose, deepParse(bpose), this._hooks.getSyntheticArrowMarkerColor),
+              lifetime
+            );
+          }
+        }
         break;
       }
       case NAV_MSGS_OCCUPANCY_GRID_DATATYPE:

@@ -18,7 +18,7 @@ import {
 } from "regl-worldview";
 
 import CarModel from "./CarModel";
-import carOutlinePoints from "./CarModel/carOutline.json";
+import carOutlinePoints from "./CarModel/freight100Outline.json";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 
@@ -98,6 +98,7 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
         if (settings && settings.overrideColor) {
           marker = { ...marker, color: settings.overrideColor };
         }
+        // the total length of the arrow is 4.7, we move the tail backwards by 0.88 (prev implementation)
 
         if (settings && settings.size) {
           marker = {
@@ -109,14 +110,20 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
             },
           };
         }
-
         const pos = pointToVec3(marker.pose.position);
         const orientation = orientationToVec4(marker.pose.orientation);
         const dir = vec3.transformQuat([0, 0, 0], [1, 0, 0], orientation);
-        // the total length of the arrow is 4.7, we move the tail backwards by 0.88 (prev implementation)
-        const tipPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, 3.82);
-        const tailPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, -0.88);
-        arrowMarkers.push({ ...marker, points: [vec3ToPoint(tailPoint), vec3ToPoint(tipPoint)] });
+        const tipPointFloat = 3.82;
+        const tailPointFloat = -0.88;
+        let tailPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, tailPointFloat);
+        let tipPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, tipPointFloat);
+        if (settings && settings.size) {
+          tailPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, settings.size.tailPoint || tailPointFloat);
+          tipPoint = vec3.scaleAndAdd([0, 0, 0], pos, dir, settings.size.tipPoint || tipPointFloat);
+        }
+        marker = { ...marker, points: [vec3ToPoint(tailPoint), vec3ToPoint(tipPoint)] };
+
+        arrowMarkers.push({ ...marker });
 
         break;
       }

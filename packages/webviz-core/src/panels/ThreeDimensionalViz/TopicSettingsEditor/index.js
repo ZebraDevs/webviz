@@ -23,6 +23,10 @@ import { getGlobalHooks } from "webviz-core/src/loadWebviz";
 import type { Topic } from "webviz-core/src/players/types";
 import {
   POINT_CLOUD_DATATYPE,
+  POSE_ARRAY_DATATYPE,
+  POSE_DATATYPE,
+  POSE_WITH_COVARIANCE_DATATYPE,
+  POSE_WITH_COVARIANCE_STAMPED_DATATYPE,
   POSE_STAMPED_DATATYPE,
   SENSOR_MSGS_LASER_SCAN_DATATYPE,
   WEBVIZ_MARKER_DATATYPE,
@@ -123,6 +127,10 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
   const editors = {
     [POINT_CLOUD_DATATYPE]: PointCloudSettingsEditor,
     [POSE_STAMPED_DATATYPE]: PoseSettingsEditor,
+    [POSE_DATATYPE]: PoseSettingsEditor,
+    [POSE_ARRAY_DATATYPE]: PoseSettingsEditor,
+    [POSE_WITH_COVARIANCE_DATATYPE]: PoseSettingsEditor,
+    [POSE_WITH_COVARIANCE_STAMPED_DATATYPE]: PoseSettingsEditor,
     [SENSOR_MSGS_LASER_SCAN_DATATYPE]: LaserScanSettingsEditor,
     [WEBVIZ_MARKER_DATATYPE]: MarkerSettingsEditor,
     "visualization_msgs/Marker": MarkerSettingsEditor,

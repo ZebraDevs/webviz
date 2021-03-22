@@ -27,6 +27,8 @@ type PoseSettings = {|
     headLength: number,
     headWidth: number,
     shaftWidth: number,
+    tipPoint: number,
+    tailPoint: number,
   },
   modelType?: "car-model" | "arrow" | "car-outline",
   addCarOutlineBuffer?: boolean,
@@ -67,6 +69,8 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
       case "arrow":
       default: {
         const currentShaftWidth = settings.size?.shaftWidth ?? 2;
+        const currentTipPoint = settings.size?.tipPoint ?? 3.82;
+        const currentTailPoint = settings.size?.tailPoint ?? -0.88;
         const currentHeadWidth = settings.size?.headWidth ?? 2;
         const currentHeadLength = settings.size?.headLength ?? 0.1;
         return (
@@ -83,6 +87,24 @@ export default function PoseSettingsEditor(props: TopicSettingsEditorProps<PoseS
               placeholder="2"
               onChange={(e) =>
                 onSettingsChange({ ...settings, size: { ...settings.size, shaftWidth: parseFloat(e.target.value) } })
+              }
+            />
+            <SLabel>Tip Point</SLabel>
+            <SInput
+              type="number"
+              value={currentTipPoint}
+              placeholder="3.82"
+              onChange={(e) =>
+                onSettingsChange({ ...settings, size: { ...settings.size, tipPoint: parseFloat(e.target.value) } })
+              }
+            />
+            <SLabel>Tail Point</SLabel>
+            <SInput
+              type="number"
+              value={currentTailPoint}
+              placeholder="-.88"
+              onChange={(e) =>
+                onSettingsChange({ ...settings, size: { ...settings.size, tailPoint: parseFloat(e.target.value) } })
               }
             />
             <SLabel>Head width</SLabel>
