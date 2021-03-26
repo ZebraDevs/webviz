@@ -129,7 +129,7 @@ export default class CachedFilelike implements Filelike {
     }
 
     const range = { start: offset, end: offset + length };
-    this._logFn(`Requested ${rangeToString(range)}`);
+    // this._logFn(`Requested ${rangeToString(range)}`);
 
     if (offset < 0 || range.end > this._fileSize || length < 0) {
       throw new Error("CachedFilelike#read invalid input");
@@ -151,12 +151,12 @@ export default class CachedFilelike implements Filelike {
     }
 
     // First, see if there are any read requests that we can resolve now.
-    this._readRequests = this._readRequests.filter(({ range, callback, requestTime }) => {
+    this._readRequests = this._readRequests.filter(({ range, callback }) => {
       if (!this._virtualBuffer.hasData(range.start, range.end)) {
         return true;
       }
 
-      this._logFn(`Returned ${bytesToMiB(range.start)}-${bytesToMiB(range.end)}MiB in ${Date.now() - requestTime}ms`);
+      // this._logFn(`Returned ${bytesToMiB(range.start)}-${bytesToMiB(range.end)}MiB in ${Date.now() - requestTime}ms`);
       this._lastResolvedCallbackEnd = range.end;
       const buffer = this._virtualBuffer.slice(range.start, range.end);
 
