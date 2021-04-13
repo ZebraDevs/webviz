@@ -707,7 +707,6 @@ export default class SceneBuilder implements MarkerProvider {
 
   _consumeOccupancyGrid = (topic: string, message: NavMsgs$OccupancyGrid): void => {
     const { frame_id } = message.header;
-
     if (!frame_id) {
       this._addError(this.errors.topicsMissingFrameIds, topic);
       return;
@@ -732,7 +731,7 @@ export default class SceneBuilder implements MarkerProvider {
 
     // set ogrid texture & alpha based on current rviz settings
     // in the future these will be customizable via the UI
-    const [alpha, map] = this._hooks.getOccupancyGridValues(topic);
+    const [alpha, map] = this._hooks.getOccupancyGridValues(this._settingsByKey[`t:${topic}`]);
 
     const mappedMessage = {
       ...message,

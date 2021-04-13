@@ -83,7 +83,8 @@ export function perPanelHooks() {
   const RobotIcon = require("@mdi/svg/svg/robot.svg").default;
   const CubeOutline = require("@mdi/svg/svg/cube-outline.svg").default;
   const LaserScanVert = require("webviz-core/src/panels/ThreeDimensionalViz/LaserScanVert").default;
-  const { defaultMapPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
+  const { defaultMapPalette, defaultObstacleGridPalette } = require("webviz-core/src/panels/ThreeDimensionalViz/commands/utils");
+
   const {
     GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
     NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
@@ -188,7 +189,7 @@ export function perPanelHooks() {
         "text",
         "triangleList",
       ],
-      renderAdditionalMarkers: () => {},
+      renderAdditionalMarkers: () => { },
       topics: [],
       iconsByDatatype: {
         [VISUALIZATION_MSGS_MARKER_DATATYPE]: HexagonIcon,
@@ -211,10 +212,12 @@ export function perPanelHooks() {
       AdditionalToolbarItems: () => null,
       LaserScanVert,
       sceneBuilderHooks: require("webviz-core/src/panels/ThreeDimensionalViz/SceneBuilder/defaultHooks").default,
-      getMapPalette() {
+      getMapPalette(maptype: string) {
+        if (maptype == "local_obstacles")
+          return defaultObstacleGridPalette;
         return defaultMapPalette;
       },
-      consumePose: () => {},
+      consumePose: () => { },
       ungroupedNodesCategory: "Topics",
       rootTransformFrame: "map",
       defaultFollowTransformFrame: null,

@@ -82,6 +82,43 @@ export const defaultMapPalette = (() => {
   return buff;
 })();
 
+
+export const defaultObstacleGridPalette = (() => {
+  const buff = new Uint8Array(256 * 4);
+
+  // standard gray map palette values
+  for (let i = 0; i <= 100; i++) {
+    const t = 1 - i / 100;
+    const idx = i * 4;
+    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: t, b: t }));
+  }
+
+  // illegal positive values in green
+  for (let i = 101; i <= 127; i++) {
+    const idx = i * 4;
+    setRgba(buff, idx, tinycolor("lime"));
+  }
+
+  // illegal negative (char) values
+  for (let i = 128; i <= 248; i++) {
+    const idx = i * 4;
+    const t = (i - 128) / (254 - 128);
+    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: 0.2, b: 0.6, a: Math.max(1 - t, 0.2) }));
+  }
+
+  // legal negative values
+  // https://github.com/cjds/carl/blob/master/carrack_ros/map_updater/include/impl/controller_costmap_republisher_block.hpp#L40
+  setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
+  setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 DYNAMIC_OBSTACLE
+  setRgba(buff, 98, COLORS.CYAN.setAlpha(0.5)); // 98 NEAR_DYNAMIC
+  setRgba(buff, 75, COLORS.YELLOW.setAlpha(0.5)); // 75 WARNING
+  setRgba(buff, 1, COLORS.PURPLE.setAlpha(0.5)); // 1 INFLATED_BLUETOOTH
+  setRgba(buff, 100, COLORS.PINK.setAlpha(0.5)); // 100 Static
+  setRgba(buff, 127, COLORS.LIME.setAlpha(0.5)); // 127 TRACKED_OCCUPIED_TO_UNOCCUPIED
+  setRgba(buff, 50, COLORS.AQUA.setAlpha(0.5)); // 50 FLATTENED
+  return buff;
+})();
+
 // convert a number array to a typed array
 // passing a typed array to regl is orders of magnitude
 // faster than passing a number[] and letting regl do the conversion

@@ -10,7 +10,7 @@ import type { ThreeDimensionalVizHooks } from "./types";
 import { TF_DATATYPE } from "webviz-core/src/util/globalConstants";
 
 const sceneBuilderHooks: ThreeDimensionalVizHooks = {
-  getSelectionState: () => {},
+  getSelectionState: () => { },
   getTopicsToRender: () => new Set(),
   consumeBobject: (topic, datatype, msg, consumeMethods, { errors }) => {
     // TF messages are consumed by TransformBuilder, not SceneBuilder.
@@ -22,7 +22,19 @@ const sceneBuilderHooks: ThreeDimensionalVizHooks = {
   addMarkerToCollector: () => false,
   getSyntheticArrowMarkerColor: () => ({ r: 0, g: 0, b: 1, a: 0.5 }),
   getFlattenedPose: () => undefined,
-  getOccupancyGridValues: (_topic) => [0.5, "map"],
+  getOccupancyGridValues: (settings) => {
+    let map = "map";
+    let alpha = 0.5
+    if (settings) {
+      if (settings.map) {
+        map = settings.map;
+      }
+      if (settings.alpha) {
+        alpha = settings.alpha;
+      }
+    }
+    return [alpha, map];
+  },
   getMarkerColor: (topic, markerColor) => markerColor,
   skipTransformFrame: null,
 };
