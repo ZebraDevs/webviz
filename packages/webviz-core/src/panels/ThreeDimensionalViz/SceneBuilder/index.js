@@ -84,7 +84,7 @@ export const buildSyntheticArrowMarker = (
 });
 
 // TODO(JP): looks like we might not actually use these fields in the new topic picker?
-export type ErrorDetails = {| frameIds: Set<string>, namespaces: Set<string> |};
+export type ErrorDetails = {| frameIds: Set < string >, namespaces: Set < string > |};
 
 export type SceneErrors = {
   topicsMissingFrameIds: Map<string, ErrorDetails>,
@@ -337,13 +337,13 @@ export default class SceneBuilder implements MarkerProvider {
   };
 
   setHighlightedMatchers(markerMatchers: Array<MarkerMatcher>) {
-    const markerMatchersByTopic = groupBy<string, MarkerMatcher>(markerMatchers, ({ topic }) => topic);
+    const markerMatchersByTopic = groupBy < string, MarkerMatcher> (markerMatchers, ({ topic }) => topic);
     this._addTopicsToRenderForMarkerMatchers(this._highlightMarkerMatchersByTopic, markerMatchers);
     this._highlightMarkerMatchersByTopic = markerMatchersByTopic;
   }
 
   setColorOverrideMatchers(markerMatchers: Array<MarkerMatcher>) {
-    const markerMatchersByTopic = groupBy<string, MarkerMatcher>(markerMatchers, ({ topic }) => topic);
+    const markerMatchersByTopic = groupBy < string, MarkerMatcher> (markerMatchers, ({ topic }) => topic);
     this._addTopicsToRenderForMarkerMatchers(this._colorOverrideMarkerMatchersByTopic, markerMatchers);
     this._colorOverrideMarkerMatchersByTopic = markerMatchersByTopic;
   }
@@ -767,7 +767,6 @@ export default class SceneBuilder implements MarkerProvider {
       error.frameIds.add(drawData.header.frame_id);
       return;
     }
-    const { overrideColor } = this._settingsByKey[`t:${topic}`] || {};
 
     const mappedMessage = {
       ...drawData,
@@ -775,7 +774,6 @@ export default class SceneBuilder implements MarkerProvider {
       pose,
       interactionData: { topic, originalMessage: originalMessage ?? drawData },
     };
-    mappedMessage.color = overrideColor || mappedMessage.color;
 
     // If a decay time is available, we assign a lifetime to this message
     // Do not automatically assign a 0 (zero) decay time since that translates
@@ -820,14 +818,14 @@ export default class SceneBuilder implements MarkerProvider {
     switch (datatype) {
       case WEBVIZ_MARKER_DATATYPE:
       case VISUALIZATION_MSGS_MARKER_DATATYPE:
-        this._consumeMarker(topic, cast<BinaryMarker>(message));
+        this._consumeMarker(topic, cast < BinaryMarker > (message));
         break;
       case WEBVIZ_MARKER_ARRAY_DATATYPE:
       case VISUALIZATION_MSGS_MARKER_ARRAY_DATATYPE:
         this._consumeMarkerArray(topic, message);
         break;
       case POSE_DATATYPE: {
-        const pose = deepParse(cast<BinaryPose>(msg.message).pose());
+        const pose = deepParse(cast < BinaryPose > (msg.message).pose());
         this.collectors[topic].addNonMarker(
           topic,
           buildSyntheticArrowMarker(msg, pose, this._hooks.getSyntheticArrowMarkerColor)
@@ -836,7 +834,7 @@ export default class SceneBuilder implements MarkerProvider {
       }
       case POSE_WITH_COVARIANCE_DATATYPE: {
         const pose = deepParse(
-          cast<BinaryPoseWithCovariance>(msg.message)
+          cast < BinaryPoseWithCovariance > (msg.message)
             .pose()
             .pose()
         );
@@ -848,7 +846,7 @@ export default class SceneBuilder implements MarkerProvider {
       }
       case POSE_WITH_COVARIANCE_STAMPED_DATATYPE: {
         // make synthetic arrow marker from the stamped pose ignore covariance for now
-        const bpose = cast<BinaryPoseWithCovarianceStamped>(msg.message);
+        const bpose = cast < BinaryPoseWithCovarianceStamped > (msg.message);
         const pose = this._transformPoseWithHeader(topic, bpose.header(), bpose.pose().pose());
         if (pose !== null) {
           this.collectors[topic].addNonMarker(
@@ -865,7 +863,7 @@ export default class SceneBuilder implements MarkerProvider {
       }
       case POSE_STAMPED_DATATYPE: {
         // make synthetic arrow marker from the stamped pose
-        const bpose_stamped = cast<BinaryPoseStamped>(msg.message);
+        const bpose_stamped = cast < BinaryPoseStamped > (msg.message);
         const pose = this._transformPoseWithHeader(topic, bpose_stamped.header(), bpose_stamped.pose());
         if (pose !== null) {
           this.collectors[topic].addNonMarker(
@@ -884,7 +882,7 @@ export default class SceneBuilder implements MarkerProvider {
         // make synthetic arrow marker from all the poass
         const lifetime = 10;
         this.collectors[topic].deleteAll();
-        const bpose_array = cast<BinaryPoseArray>(msg.message);
+        const bpose_array = cast < BinaryPoseArray > (msg.message);
         for (const bpose of bpose_array.poses()) {
           const pose = this._transformPoseWithHeader(topic, bpose_array.header(), bpose);
           if (pose !== null) {
@@ -908,10 +906,11 @@ export default class SceneBuilder implements MarkerProvider {
         this._consumeOccupancyGrid(topic, deepParse(message));
         break;
       case NAV_MSGS_PATH_DATATYPE: {
-        const pathStamped = cast<BinaryPath>(message);
+        const pathStamped = cast < BinaryPath > (message);
         if (pathStamped.poses().length() === 0) {
           break;
         }
+        const { overrideColor } = this._settingsByKey[`t:${topic}`] || { r: 1, g: 0, b: 0, a: 1 };
         const newMessage = {
           header: deepParse(pathStamped.header()),
           // TODO(@cjds) Make this make use of the orientation of the poses in the path as well
@@ -921,7 +920,7 @@ export default class SceneBuilder implements MarkerProvider {
             .map((pose) => deepParse(pose.pose().position())),
           closed: false,
           scale: { x: 0.2 },
-          color: { r: 1, g: 0, b: 0, a: 1 },
+          color: overrideColor,
         };
         this._consumeNonMarkerMessage(topic, newMessage, 4 /* line strip */, message);
         break;
@@ -934,7 +933,7 @@ export default class SceneBuilder implements MarkerProvider {
         break;
       case GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE: {
         // convert Polygon to a line strip
-        const polygonStamped = cast<BinaryPolygonStamped>(message);
+        const polygonStamped = cast < BinaryPolygonStamped > (message);
         const polygon = polygonStamped.polygon();
         if (polygon.points().length() === 0) {
           break;
