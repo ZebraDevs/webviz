@@ -2,7 +2,8 @@
   {
     "x": -0.4,
     "y": -0.4,
-    "z": 0
+    "z": 0,
+    "_comment": "square that circumscribes https://github.com/fetchrobotics/robot_descriptions/blob/master/FREIGHT100/footprints/freight100_footprint.json"
   },
   {
     "x": 0.4,

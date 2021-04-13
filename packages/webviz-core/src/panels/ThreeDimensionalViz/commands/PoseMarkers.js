@@ -17,7 +17,7 @@ import {
   type CommonCommandProps,
 } from "regl-worldview";
 
-import CarModel from "./CarModel";
+import { Freight100Model, Freight500Model, Freight1500Model } from "./CarModel";
 import carOutlinePoints from "./CarModel/freight100Outline.json";
 import { useExperimentalFeature } from "webviz-core/src/components/ExperimentalFeatures";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
@@ -55,7 +55,7 @@ const getScaledCarOutlineBufferPoints = (scaling: { x: number, y: number }) => {
   return scaledAndTransformedPoints;
 };
 
-export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: Props): Node[] {
+export default React.memo < Props > (function PoseMarkers({ children, layerIndex }: Props): Node[] {
   const useUpdatedScaling = useExperimentalFeature("updatedPoseErrorScaling");
   const scaledCarOutlineBufferPoints = React.useMemo(
     () => getScaledCarOutlineBufferPoints(useUpdatedScaling ? updatedScaling : originalScaling),
@@ -76,7 +76,7 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
     }
 
     switch (settings?.modelType) {
-      case "car-outline": {
+      case "freight100-outline": {
         filledPolygons.push({
           pose,
           interactionData,
@@ -85,11 +85,27 @@ export default React.memo<Props>(function PoseMarkers({ children, layerIndex }: 
         });
         break;
       }
-      case "car-model": {
+      case "freight100-model": {
         models.push(
-          <CarModel layerIndex={layerIndex} key={i}>
+          <Freight100Model layerIndex={layerIndex} key={i}>
             {{ pose, alpha: settings.alpha || 1, interactionData }}
-          </CarModel>
+          </Freight100Model>
+        );
+        break;
+      }
+      case "freight500-model": {
+        models.push(
+          <Freight500Model layerIndex={layerIndex} key={i}>
+            {{ pose, alpha: settings.alpha || 1, interactionData }}
+          </Freight500Model>
+        );
+        break;
+      }
+      case "freight1500-model": {
+        models.push(
+          <Freight1500Model layerIndex={layerIndex} key={i}>
+            {{ pose, alpha: settings.alpha || 1, interactionData }}
+          </Freight1500Model>
         );
         break;
       }
