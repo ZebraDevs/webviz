@@ -6,18 +6,14 @@
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
 
-import CheckboxBlankOutlineIcon from "@mdi/svg/svg/checkbox-blank-outline.svg";
-import CheckboxMarkedIcon from "@mdi/svg/svg/checkbox-marked.svg";
-import InformationIcon from "@mdi/svg/svg/information.svg";
 import React from "react";
 
 import { type TopicSettingsEditorProps } from ".";
-import ColorPickerForTopicSettings from "./ColorPickerForTopicSettings";
 import { SLabel, SInput } from "./common";
 import Flex from "webviz-core/src/components/Flex";
 import Icon from "webviz-core/src/components/Icon";
 import { getGlobalHooks } from "webviz-core/src/loadWebviz";
-import type { PoseStamped } from "webviz-core/src/types/Messages";
+import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
 import { colors } from "webviz-core/src/util/sharedStyleConstants";
 
 type OccupancyGridSettings = {|
@@ -25,7 +21,7 @@ type OccupancyGridSettings = {|
         map ?: "map" | "local_obstacles",
 |};
 
-export default function OccupancyGridSettingsEditor(props: TopicSettingsEditorProps<PoseStamped, OccupancyGridSettings>) {
+export default function OccupancyGridSettingsEditor(props: TopicSettingsEditorProps<OccupancyGridMessage, OccupancyGridSettings>) {
     const { message, settings, onFieldChange, onSettingsChange } = props;
     const badrgbOverloadTypeSetting = React.useMemo(() => !["map", "local_obstacles"].includes(settings.map), [
         settings,

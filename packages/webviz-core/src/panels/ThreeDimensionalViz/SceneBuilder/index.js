@@ -909,7 +909,7 @@ export default class SceneBuilder implements MarkerProvider {
         if (pathStamped.poses().length() === 0) {
           break;
         }
-        const { overrideColor } = this._settingsByKey[`t:${topic}`] || { r: 1, g: 0, b: 0, a: 1 };
+        const overrideColor = this._settingsByKey[`t:${topic}`]?.overrideColor || { r: 1, g: 0, b: 0, a: 1 };
         const newMessage = {
           header: deepParse(pathStamped.header()),
           // TODO(@cjds) Make this make use of the orientation of the poses in the path as well
@@ -934,6 +934,8 @@ export default class SceneBuilder implements MarkerProvider {
         // convert Polygon to a line strip
         const polygonStamped = cast < BinaryPolygonStamped > (message);
         const polygon = polygonStamped.polygon();
+        const overrideColor = this._settingsByKey[`t:${topic}`]?.overrideColor || { r: 0, g: 1, b: 0, a: 1 };
+        const scale = this._settingsByKey[`t:${topic}`]?.scale || 0.2;
         if (polygon.points().length() === 0) {
           break;
         }
@@ -941,8 +943,8 @@ export default class SceneBuilder implements MarkerProvider {
           header: deepParse(polygonStamped.header()),
           points: deepParse(polygon.points()),
           closed: true,
-          scale: { x: 0.2 },
-          color: { r: 0, g: 1, b: 0, a: 1 },
+          scale: { x: scale },
+          color: overrideColor
         };
         this._consumeNonMarkerMessage(topic, newMessage, 4 /* line strip */, message);
         break;

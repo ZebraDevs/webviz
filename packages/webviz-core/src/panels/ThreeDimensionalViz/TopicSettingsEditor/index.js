@@ -16,6 +16,7 @@ import MarkerSettingsEditor from "./MarkerSettingsEditor";
 import PointCloudSettingsEditor from "./PointCloudSettingsEditor";
 import PoseSettingsEditor from "./PoseSettingsEditor";
 import OccupancyGridSettingsEditor from "./OccupancyGridSettingsEditor";
+import PolygonSettingsEditor from "./PolygonSettingsEditor";
 import styles from "./TopicSettingsEditor.module.scss";
 import ErrorBoundary from "webviz-core/src/components/ErrorBoundary";
 import Flex from "webviz-core/src/components/Flex";
@@ -33,6 +34,7 @@ import {
   WEBVIZ_MARKER_DATATYPE,
   NAV_MSGS_PATH_DATATYPE,
   NAV_MSGS_OCCUPANCY_GRID_DATATYPE,
+  GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
 } from "webviz-core/src/util/globalConstants";
 
 export const LINED_CONVEX_HULL_RENDERING_SETTING = "LinedConvexHull";
@@ -139,6 +141,7 @@ export function topicSettingsEditorForDatatype(datatype: string): ?ComponentType
     "visualization_msgs/MarkerArray": MarkerSettingsEditor,
     [NAV_MSGS_PATH_DATATYPE]: MarkerSettingsEditor,
     [NAV_MSGS_OCCUPANCY_GRID_DATATYPE]: OccupancyGridSettingsEditor,
+    [GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE]: PolygonSettingsEditor,
     ...getGlobalHooks().perPanelHooks().ThreeDimensionalViz.topicSettingsEditors,
   };
   return editors[datatype];

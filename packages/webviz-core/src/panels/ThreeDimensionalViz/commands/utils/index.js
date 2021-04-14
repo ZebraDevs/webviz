@@ -10,6 +10,7 @@ import tinycolor from "tinycolor2";
 import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
 
 export const COLORS = {
+  WHITE: tinycolor("white"),
   BLACK: tinycolor("black"),
   RED: tinycolor("red"),
   PINK: tinycolor("pink"),
@@ -59,17 +60,6 @@ export const defaultMapPalette = (() => {
   }
 
   // legal negative values
-
-  // https://github.com/cjds/carl/blob/master/carrack_ros/map_updater/include/impl/controller_costmap_republisher_block.hpp#L40
-  setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
-  setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 DYNAMIC_OBSTACLE
-  setRgba(buff, 98, COLORS.CYAN.setAlpha(0.5)); // 98 NEAR_DYNAMIC
-  setRgba(buff, 75, COLORS.YELLOW.setAlpha(0.5)); // 75 WARNING
-  setRgba(buff, 1, COLORS.PURPLE.setAlpha(0.5)); // 1 INFLATED_BLUETOOTH
-  setRgba(buff, 100, COLORS.PINK.setAlpha(0.5)); // 100 Static
-  setRgba(buff, 127, COLORS.LIME.setAlpha(0.5)); // 127 TRACKED_OCCUPIED_TO_UNOCCUPIED
-  setRgba(buff, 50, COLORS.AQUA.setAlpha(0.5)); // 50 FLATTENED
-
   setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
   setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 UNDRIVEABLE
   setRgba(buff, 253 * 4, COLORS.CYAN.setAlpha(0.5)); // -3 SIDEWALK
@@ -110,12 +100,12 @@ export const defaultObstacleGridPalette = (() => {
   // https://github.com/cjds/carl/blob/master/carrack_ros/map_updater/include/impl/controller_costmap_republisher_block.hpp#L40
   setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
   setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 DYNAMIC_OBSTACLE
-  setRgba(buff, 98, COLORS.CYAN.setAlpha(0.5)); // 98 NEAR_DYNAMIC
-  setRgba(buff, 75, COLORS.YELLOW.setAlpha(0.5)); // 75 WARNING
-  setRgba(buff, 1, COLORS.PURPLE.setAlpha(0.5)); // 1 INFLATED_BLUETOOTH
-  setRgba(buff, 100, COLORS.PINK.setAlpha(0.5)); // 100 Static
-  setRgba(buff, 127, COLORS.LIME.setAlpha(0.5)); // 127 TRACKED_OCCUPIED_TO_UNOCCUPIED
-  setRgba(buff, 50, COLORS.AQUA.setAlpha(0.5)); // 50 FLATTENED
+  setRgba(buff, 98 * 4, COLORS.CYAN.setAlpha(0.5)); // 98 NEAR_DYNAMIC
+  setRgba(buff, 75 * 4, COLORS.YELLOW.setAlpha(0.5)); // 75 WARNING
+  setRgba(buff, 1 * 4, COLORS.PURPLE.setAlpha(0.5)); // 1 INFLATED_BLUETOOTH
+  setRgba(buff, 100 * 4, COLORS.PINK.setAlpha(0.5)); // 100 Static
+  setRgba(buff, 127 * 4, COLORS.LIME.setAlpha(0.5)); // 127 TRACKED_OCCUPIED_TO_UNOCCUPIED
+  setRgba(buff, 50 * 4, COLORS.AQUA.setAlpha(0.5)); // 50 FLATTENED
   return buff;
 })();
 
