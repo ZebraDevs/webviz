@@ -9,7 +9,7 @@
 import { mat4, vec3, quat } from "gl-matrix";
 import type { Mat4 } from "gl-matrix";
 
-import type { TF, MutablePose, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
+import type { TF, MutablePoint, MutablePose, Pose, Point, Orientation } from "webviz-core/src/types/Messages";
 import { objectValues } from "webviz-core/src/util";
 
 // allocate some temporary variables
@@ -60,6 +60,63 @@ export class Transform {
       return this;
     }
     return this.parent.rootTransform();
+  }
+
+  applyPoint(output: MutablePoint, input: Point, rootId: string): ?MutablePoint {
+
+    rootId = stripLeadingSlash(rootId);
+
+    if (!this.isValid(rootId)) {
+      return null;
+    }
+
+    if (this.id === rootId) {
+      output.x = input.x;
+      output.y = input.y;
+      output.z = input.z;
+      return output;
+    }
+
+    // Can't apply if this transform doesn't map to the root transform.
+    if (!this.isChildOfTransform(rootId)) {
+      return null;
+    }
+    // set a transform matrix from the input pose
+    mat4.fromRotationTranslation(
+      tempMat,
+      quat.set(tempOrient, 0, 0, 0, 1),
+      vec3.set(tempPos, input.x, input.y, input.z)
+    );
+
+    // set transform matrix to (our matrix * pose transform matrix)
+    mat4.multiply(tempMat, this.matrix, tempMat);
+
+    // copy the transform matrix components out into temp variables
+    mat4.getTranslation(tempPos, tempMat);
+
+    // Normalize the values in the matrix by the scale. This ensures that we get the correct rotation
+    // out even if the scale isn't 1 in each axis. The logic from this comes from the threejs
+    // implementation and an SO answer:
+    // - https://github.com/mrdoob/three.js/blob/master/src/math/Matrix4.js#L790-L815
+    // - https://math.stackexchange.com/a/1463487
+    mat4.getScaling(tempScale, tempMat);
+    if (mat4.determinant(tempMat) < 0) {
+      tempScale[0] *= -1;
+    }
+    vec3.inverse(tempScale, tempScale);
+    mat4.scale(tempMat, tempMat, tempScale);
+
+    mat4.getRotation(tempOrient, tempMat);
+
+    // mutate the output w/ the temp values
+    output.x = tempPos[0];
+    output.y = tempPos[1];
+    output.z = tempPos[2];
+
+    if (!this.parent) {
+      return output;
+    }
+    return this.parent.applyPoint(output, output, rootId);
   }
 
   apply(output: MutablePose, input: Pose, rootId: string): ?MutablePose {
@@ -170,6 +227,11 @@ export default class Transforms {
   apply(output: MutablePose, original: Pose, frameId: string, rootId: string): ?MutablePose {
     const tf = this.storage.get(frameId);
     return tf.apply(output, original, rootId);
+  }
+
+  applyPoint(output: MutablePoint, original: Point, frameId: string, rootId: string): ?MutablePoint {
+    const tf = this.storage.get(frameId);
+    return tf.applyPoint(output, original, rootId);
   }
 
   rootOfTransform(transformID: string): Transform {

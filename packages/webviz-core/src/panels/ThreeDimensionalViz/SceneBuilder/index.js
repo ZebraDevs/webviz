@@ -16,6 +16,7 @@ import type { MarkerMatcher } from "webviz-core/src/panels/ThreeDimensionalViz/T
 import Transforms from "webviz-core/src/panels/ThreeDimensionalViz/Transforms";
 import { cast, type BobjectMessage, type Topic, type Frame, type Message } from "webviz-core/src/players/types";
 import type {
+  BinaryPoint,
   BinaryPose,
   BinaryPoseWithCovariance,
   BinaryPath,
@@ -32,6 +33,7 @@ import type {
   Namespace,
   NavMsgs$OccupancyGrid,
   MutablePose,
+  MutablePoint,
   Pose,
   StampedMessage,
 } from "webviz-core/src/types/Messages";
@@ -61,7 +63,7 @@ import {
   GEOMETRY_MSGS_POLYGON_STAMPED_DATATYPE,
 } from "webviz-core/src/util/globalConstants";
 import naturalSort from "webviz-core/src/util/naturalSort";
-import { emptyPose } from "webviz-core/src/util/Pose";
+import { emptyPose, emptyPoint } from "webviz-core/src/util/Pose";
 import sendNotification from "webviz-core/src/util/sendNotification";
 import { fromSec } from "webviz-core/src/util/time";
 
@@ -473,6 +475,32 @@ export default class SceneBuilder implements MarkerProvider {
     return pose;
   };
 
+  _transformPointWithHeader = (topic: string, header: BinaryHeader, point: BinaryPoint): ?MutablePoint => {
+    const frame_id = header.frame_id();
+    if (!frame_id) {
+      const error = this._addError(this.errors.topicsMissingFrameIds, topic);
+      error.namespaces.add("points");
+      return null;
+    }
+
+    if (frame_id === this.rootTransformID) {
+      // Transforming is a bit expensive, and this (no transformation necessary) is the common-case
+      // TODO: Need to deep-clone, callers mutate the result; fix this downstream.
+      return deepParse(point);
+    }
+    deepParse(point)
+    // frame_id !== this.rootTransformID.
+    // We continue to render these, though they may be inaccurate
+    const out_point = this.transforms.applyPoint(emptyPoint(), deepParse(point), frame_id, this.rootTransformID);
+
+    if (!out_point) {
+      const topicMissingError = this._addError(this.errors.topicsMissingTransforms, topic);
+      topicMissingError.namespaces.add(namespace);
+      topicMissingError.frameIds.add(frame_id);
+    }
+    return out_point;
+  };
+
   _transformMarkerPose = (topic: string, marker: BinaryMarker | BinaryInstancedMarker): ?MutablePose => {
     const frame_id = marker.header().frame_id();
 
@@ -624,15 +652,13 @@ export default class SceneBuilder implements MarkerProvider {
     const parsedPoints = [];
     // if the marker has points, adjust bounds by the points. (Constructed markers sometimes don't
     // have points.)
+    let printed = false;
     if (points && points.length()) {
       for (const point of points) {
-        const x = point.x();
-        const y = point.y();
-        const z = point.z();
-        minZ = Math.min(minZ, point.z());
-        const transformedPoint = { x: x + position.x, y: y + position.y, z: z + position.z };
+        const transformedPoint = this._transformPointWithHeader(topic, message.header(), point);
+        minZ = Math.min(minZ, transformedPoint.z);
         this.bounds.update(transformedPoint);
-        parsedPoints.push({ x, y, z });
+        parsedPoints.push(transformedPoint);
       }
     } else {
       // otherwise just adjust by the pose
@@ -680,7 +706,7 @@ export default class SceneBuilder implements MarkerProvider {
       type: message.type(),
       scale: deepParse(message.scale()),
       lifetime: deepParse(lifetime),
-      pose,
+      pose: emptyPose(),
       interactionData,
       color: overrideColor || color,
       colors: overrideColor ? [] : deepParse(message.colors()),
