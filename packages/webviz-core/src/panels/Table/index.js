@@ -50,8 +50,8 @@ const STableRow = styled.tr`
 
 type STableHeaderProps = {|
   id: string,
-  isSortedAsc: boolean,
-  isSortedDesc: boolean,
+    isSortedAsc: boolean,
+      isSortedDesc: boolean,
 |};
 
 const STableHeader = styled.th`
@@ -80,9 +80,38 @@ const STableContainer = styled.div`
   font-family: ${ROBOTO_MONO};
 `;
 
+const SErrorTextArea = styled.textarea`
+  width: 100%;
+  color: red;
+  height: 50%;
+  resize: none;
+  border: none;
+  margin: 0;
+  padding: 4px 6px;
+  &:focus {
+    background: rgba(255, 255, 255, 0.1);
+  }
+`;
+
+const STextArea = styled.textarea`
+  color:  ${props => props.error ? 'red' : 'white'}
+  width: 100%;
+  height: 50%;
+  resize: none;
+  border: none;
+  margin: 0;
+  padding: 4px 6px;
+  &:focus {
+    background: rgba(255, 255, 255, 0.1);
+  }
+`;
+
 function sanitizeAccessorPath(accessorPath) {
   return accessorPath.replace(/\./g, "-");
 }
+
+const scopedEval = (scope, script) => Function(`"use strict"; ${script}`).bind(scope)();
+
 
 function getColumnsFromObject(obj: RosObject, accessorPath: string): ColumnOptions[] {
   const columns = [
@@ -134,130 +163,85 @@ const Table = ({ value, accessorPath }: {| value: mixed, accessorPath: string |}
 
     const rosObject: RosObject = ((Array.isArray(value) ? value[0] || {} : value): any);
 
-    // Strong assumption about structure of data.
-    return getColumnsFromObject(rosObject, accessorPath);
-  }, [accessorPath, value]);
+  // Strong assumption about structure of data.
+  return getColumnsFromObject(rosObject, accessorPath);
+}, [accessorPath, value]);
 
-  const data = React.useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
+const data = React.useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
 
-  const tableInstance: TableInstance<PaginationProps, PaginationState> = useTable(
-    {
-      columns,
-      data,
-      initialState: { pageSize: 30 },
-    },
-    useSortBy,
-    useExpanded,
-    !isNested ? usePagination : _.noop
-  );
+const tableInstance: TableInstance<PaginationProps, PaginationState> = useTable(
+  {
+    columns,
+    data,
+    initialState: { pageSize: 30 },
+  },
+  useSortBy,
+  useExpanded);
 
-  if (
-    typeof value !== "object" ||
-    value === null ||
-    (!isNested && Array.isArray(value) && typeof value[0] !== "object")
-  ) {
-    return (
-      <EmptyState>Cannot render primitive values in a table. Try using the Raw Messages panel instead.</EmptyState>
-    );
-  }
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    prepareRow,
-    rows,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize },
-  } = tableInstance;
-
+if (
+  typeof value !== "object" ||
+  value === null ||
+  (!isNested && Array.isArray(value) && typeof value[0] !== "object")
+) {
   return (
-    <>
-      <STable {...getTableProps()}>
-        <thead>
-          {headerGroups.map((headerGroup, i) => {
-            return (
-              <STableRow
-                index={0 /* For properly coloring background */}
-                key={i}
-                {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => {
-                  return (
-                    <STableHeader
-                      isSortedAsc={column.isSorted && !column.isSortedDesc}
-                      isSortedDesc={column.isSorted && column.isSortedDesc}
-                      id={column.id}
-                      key={column.id}
-                      data-test={`column-header-${sanitizeAccessorPath(column.id)}`}
-                      {...column.getHeaderProps(column.getSortByToggleProps())}>
-                      {column.render("Header")}
-                    </STableHeader>
-                  );
-                })}
-              </STableRow>
-            );
-          })}
-        </thead>
-        <tbody {...getTableBodyProps()}>
-          {(!isNested ? page : rows).map((row) => {
-            prepareRow(row);
-            return (
-              <STableRow {...row.getRowProps()} key={row.index} index={row.index}>
-                {row.cells.map((cell, i) => {
-                  return (
-                    <STableData key={i} {...cell.getCellProps()}>
-                      {cell.render("Cell")}
-                    </STableData>
-                  );
-                })}
-              </STableRow>
-            );
-          })}
-        </tbody>
-      </STable>
-      {!isNested && (
-        <div style={{ margin: "4px auto 0" }}>
-          <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-            {"<<"}
-          </button>{" "}
-          <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-            {"<"}
-          </button>{" "}
-          <span>
-            Page{" "}
-            <strong>
-              {pageIndex + 1} of {pageOptions.length}
-            </strong>{" "}
-          </span>
-          <button onClick={() => nextPage()} disabled={!canNextPage}>
-            {">"}
-          </button>{" "}
-          <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-            {">>"}
-          </button>{" "}
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-            }}>
-            {[10, 20, 30, 40, 50].map((size) => (
-              <option key={size} value={size}>
-                Show {size}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-    </>
+    <EmptyState>Cannot render primitive values in a table. Try using the Raw Messages panel instead.</EmptyState>
   );
+}
+
+const {
+  getTableProps,
+  getTableBodyProps,
+  headerGroups,
+  prepareRow,
+  rows,
+} = tableInstance;
+
+return (
+  <>
+    <STable {...getTableProps()}>
+      <thead>
+        {headerGroups.map((headerGroup, i) => {
+          return (
+            <STableRow
+              index={0 /* For properly coloring background */}
+              key={i}
+              {...headerGroup.getHeaderGroupProps()}>
+              {headerGroup.headers.map((column) => {
+                return (
+                  <STableHeader
+                    isSortedAsc={column.isSorted && !column.isSortedDesc}
+                    isSortedDesc={column.isSorted && column.isSortedDesc}
+                    id={column.id}
+                    key={column.id}
+                    data-test={`column-header-${sanitizeAccessorPath(column.id)}`}
+                    {...column.getHeaderProps(column.getSortByToggleProps())}>
+                    {column.render("Header")}
+                  </STableHeader>
+                );
+              })}
+            </STableRow>
+          );
+        })}
+      </thead>
+      <tbody {...getTableBodyProps()}>
+        {rows.map((row) => {
+          prepareRow(row);
+          return (
+            <STableRow {...row.getRowProps()} key={row.index} index={row.index}>
+              {row.cells.map((cell, i) => {
+                return (
+                  <STableData key={i} {...cell.getCellProps()}>
+                    {cell.render("Cell")}
+                  </STableData>
+                );
+              })}
+            </STableRow>
+          );
+        })}
+      </tbody>
+    </STable>
+  </>
+);
 };
 
 const SObjectCell = styled.span`
@@ -287,33 +271,77 @@ const TableCell = ({ value, row, accessorPath }: { value: any, row: any, accesso
   );
 };
 
-type Config = {| topicPath: string |};
+type Config = {| topicPath: string, filterFunction: string |};
 type Props = { config: Config, saveConfig: SaveConfig<Config> };
 
 function TablePanel({ config, saveConfig }: Props) {
-  const { topicPath } = config;
+  const { topicPath, filterFunction } = config;
   const onTopicPathChange = React.useCallback((newTopicPath: string) => {
     saveConfig({ topicPath: newTopicPath });
   }, [saveConfig]);
+  const onFilterFunctionChange = React.useCallback((input_event: SyntheticInputEvent<HTMLTextAreaElement>) => {
+    saveConfig({ filterFunction: input_event.target.value });
+  }, [saveConfig]);
+
+  const [filterHasError, setFilterHasError] = React.useState(false);
 
   const topicRosPath: ?RosPath = React.useMemo(() => parseRosPath(topicPath), [topicPath]);
   const topicName = topicRosPath?.topicName || "";
-  const msgs = useMessagesByTopic({ topics: [topicName], historySize: 1 })[topicName];
+  const msgs = useMessagesByTopic({ topics: [topicName], historySize: 1000 })[topicName];
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems([topicPath]);
-  const cachedMessages = msgs.length ? cachedGetMessagePathDataItems(topicPath, msgs[0]) : [];
+  const cachedMessages = [];
+
+  let use_eval = filterFunction.length > 0;
+  if (msgs.length > 0) {
+
+    try {
+      const x = cachedGetMessagePathDataItems(topicPath, msgs[0])[0].value;
+      scopedEval({ msg: x }, `return ${filterFunction}`);
+      if (filterHasError) {
+        setFilterHasError(false);
+      }
+    } catch (error) {
+      console.log(`Getting error ${error.name} ${error.message}`)
+      use_eval = false;
+      if (!filterHasError) {
+        setFilterHasError(true);
+      }
+      // expected output: ReferenceError: nonExistentFunction is not defined
+      // Note - error messages will vary depending on browser
+    }
+  }
+
+  for (const msg of msgs.reverse()) {
+    const new_msg = cachedGetMessagePathDataItems(topicPath, msg)[0].value;
+    if (!use_eval) {
+      cachedMessages.push(new_msg);
+    } else {
+      try {
+        const output = scopedEval({ msg: new_msg }, `return ${filterFunction}`);
+        if (output === true) {
+          cachedMessages.push(new_msg);
+        }
+      } catch (error) {
+      }
+    }
+  }
+
 
   return (
     <Flex col clip style={{ position: "relative" }}>
       <PanelToolbar helpContent={helpContent}>
         <div style={{ width: "100%", lineHeight: "20px" }}>
           <MessagePathInput index={0} path={topicPath} onChange={onTopicPathChange} inputStyle={{ height: "100%" }} />
+          {/* <Text index={1} path={filterFunction} onChange={onFilterFunctionChange} inputStyle={{ height: "100%" }} /> */}
+          <STextArea error={filterHasError} placeholder="JS filter fn here. eg. this.msg.header.frame_id === 'base_link'" value={filterFunction} onChange={onFilterFunctionChange} />
         </div>
       </PanelToolbar>
       {!topicPath && <EmptyState>No topic selected</EmptyState>}
       {topicPath && !cachedMessages?.length && <EmptyState>Waiting for next message</EmptyState>}
       {topicPath && cachedMessages && cachedMessages?.length && (
+
         <STableContainer>
-          <Table value={cachedMessages[0].value} accessorPath={""} />
+          <Table value={cachedMessages} accessorPath={""} />
         </STableContainer>
       )}
     </Flex>
@@ -325,4 +353,4 @@ TablePanel.defaultConfig = {
   topicPath: "",
 };
 
-export default hot(Panel<Config>(TablePanel));
+export default hot(Panel < Config > (TablePanel));

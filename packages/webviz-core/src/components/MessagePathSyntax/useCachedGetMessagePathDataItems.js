@@ -24,12 +24,12 @@ import { enumValuesByDatatypeAndField, getTopicsByTopicName } from "webviz-core/
 
 export type MessagePathDataItem = {|
   value: mixed, // The actual value.
-  // TODO(JP): Maybe this should just be a simple path without nice ids, and then have a separate function
-  // to generate "nice ids". Because they might not always be reliable and we might want to use different
-  // kinds of "nice ids" for different purposes, e.g. `[10]{id==5}{other_id=123}` for tooltips (more information)
-  // but `[:]{other_id==123}` for line graphs (more likely to match values).
-  path: string, // The path to get to this value. Tries to use "nice ids" like `[:]{some_id==123}` wherever possible.
-  constantName?: ?string, // The name of the constant that the value matches up with, if any.
+    // TODO(JP): Maybe this should just be a simple path without nice ids, and then have a separate function
+    // to generate "nice ids". Because they might not always be reliable and we might want to use different
+    // kinds of "nice ids" for different purposes, e.g. `[10]{id==5}{other_id=123}` for tooltips (more information)
+    // but `[:]{other_id==123}` for line graphs (more likely to match values).
+    path: string, // The path to get to this value. Tries to use "nice ids" like `[:]{some_id==123}` wherever possible.
+      constantName ?: ? string, // The name of the constant that the value matches up with, if any.
 |};
 
 // Given a set of message paths, this returns a function that you can call to resolve a single path
@@ -40,7 +40,7 @@ export function useCachedGetMessagePathDataItems(
 ): (path: string, message: ReflectiveMessage) => ?(MessagePathDataItem[]) {
   const { topics: providerTopics, datatypes } = PanelAPI.useDataSourceInfo();
   const { globalVariables } = useGlobalVariables();
-  const memoizedPaths: string[] = useShallowMemo<string[]>(paths);
+  const memoizedPaths: string[] = useShallowMemo < string[] > (paths);
 
   // We first fill in global variables in the paths, so we can later see which paths have really
   // changed when the global variables have changed.
@@ -54,49 +54,49 @@ export function useCachedGetMessagePathDataItems(
     }
     return filledInPaths;
   }, [globalVariables, memoizedPaths]);
-  const memoizedFilledInPaths = useDeepMemo<{ [string]: RosPath }>(unmemoizedFilledInPaths);
+  const memoizedFilledInPaths = useDeepMemo < { [string]: RosPath } > (unmemoizedFilledInPaths);
 
   // Cache MessagePathDataItem arrays by Message. We need to clear out this cache whenever
   // the topics or datatypes change, since that's what getMessagePathDataItems
   // depends on, outside of the message+path.
-  const cachesByPath = useRef<{
-    [string]: {| filledInPath: RosPath, weakMap: WeakMap<ReflectiveMessage, ?(MessagePathDataItem[])> |},
-  }>({});
-  if (useChangeDetector([providerTopics, datatypes], true)) {
-    cachesByPath.current = {};
-  }
-  // When the filled in paths changed, then that means that either the path string changed, or a
-  // relevant global variable changed. Delete the caches for where the `filledInPath` doesn't match
-  // any more.
-  if (useChangeDetector([memoizedFilledInPaths], false)) {
-    for (const path of Object.keys(cachesByPath.current)) {
-      const filledInPath = memoizedFilledInPaths[path];
-      if (!filledInPath || !isEqual(cachesByPath.current[path].filledInPath, filledInPath)) {
-        delete cachesByPath.current[path];
-      }
-    }
-  }
-
-  return useCallback((path: string, message: ReflectiveMessage): ?(MessagePathDataItem[]) => {
-    if (!memoizedPaths.includes(path)) {
-      throw new Error(`path (${path}) was not in the list of cached paths`);
-    }
+  const cachesByPath = useRef < {
+    [string]: {| filledInPath: RosPath, weakMap: WeakMap < ReflectiveMessage, ?(MessagePathDataItem[]) > |},
+  }> ({});
+if (useChangeDetector([providerTopics, datatypes], true)) {
+  cachesByPath.current = {};
+}
+// When the filled in paths changed, then that means that either the path string changed, or a
+// relevant global variable changed. Delete the caches for where the `filledInPath` doesn't match
+// any more.
+if (useChangeDetector([memoizedFilledInPaths], false)) {
+  for (const path of Object.keys(cachesByPath.current)) {
     const filledInPath = memoizedFilledInPaths[path];
-    if (!filledInPath) {
-      return;
+    if (!filledInPath || !isEqual(cachesByPath.current[path].filledInPath, filledInPath)) {
+      delete cachesByPath.current[path];
     }
-    if (!cachesByPath.current[path]) {
-      cachesByPath.current[path] = { filledInPath, weakMap: new WeakMap() };
-    }
-    const { weakMap } = cachesByPath.current[path];
-    if (!weakMap.has(message)) {
-      const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes);
-      weakMap.set(message, messagePathDataItems);
-      return messagePathDataItems;
-    }
-    const messagePathDataItems = weakMap.get(message);
+  }
+}
+
+return useCallback((path: string, message: ReflectiveMessage): ?(MessagePathDataItem[]) => {
+  if (!memoizedPaths.includes(path)) {
+    throw new Error(`path (${path}) was not in the list of cached paths`);
+  }
+  const filledInPath = memoizedFilledInPaths[path];
+  if (!filledInPath) {
+    return;
+  }
+  if (!cachesByPath.current[path]) {
+    cachesByPath.current[path] = { filledInPath, weakMap: new WeakMap() };
+  }
+  const { weakMap } = cachesByPath.current[path];
+  if (!weakMap.has(message)) {
+    const messagePathDataItems = getMessagePathDataItems(message, filledInPath, providerTopics, datatypes);
+    weakMap.set(message, messagePathDataItems);
     return messagePathDataItems;
-  }, [datatypes, memoizedFilledInPaths, memoizedPaths, providerTopics]);
+  }
+  const messagePathDataItems = weakMap.get(message);
+  return messagePathDataItems;
+}, [datatypes, memoizedFilledInPaths, memoizedPaths, providerTopics]);
 }
 
 function filterMatches(filter: MessagePathFilter, value: any) {
@@ -147,9 +147,9 @@ export function fillInGlobalVariablesInPath(rosPath: RosPath, globalVariables: G
       }
 
       (messagePathPart.type: "name" | "filter");
-      return messagePathPart;
-    }),
-  };
+    return messagePathPart;
+  }),
+};
 }
 
 const TIME_NEXT_BY_NAME = Object.freeze({
@@ -293,7 +293,7 @@ export function getMessagePathDataItems(
 }
 
 export const useDecodeMessagePathsForMessagesByTopic = (paths: string[]) => {
-  const memoizedPaths = useShallowMemo<string[]>(paths);
+  const memoizedPaths = useShallowMemo < string[] > (paths);
   const cachedGetMessagePathDataItems = useCachedGetMessagePathDataItems(memoizedPaths);
   // Note: Let callers define their own memoization scheme for messagesByTopic. For regular playback
   // useMemo might be appropriate, but weakMemo will likely better for blocks.
