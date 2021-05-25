@@ -5,9 +5,36 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
+import tinycolor from "tinycolor2";
 
 import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
 
+export const COLORS = {
+  WHITE: tinycolor("white"),
+  BLACK: tinycolor("black"),
+  RED: tinycolor("red"),
+  PINK: tinycolor("pink"),
+  LIME: tinycolor("lime"),
+  CYAN: tinycolor("cyan"),
+  WHITE: tinycolor("white"),
+  AQUA: tinycolor("aqua"),
+  BLUE: tinycolor("blue"),
+  ORANGE: tinycolor("orange"),
+  MAGENTA: tinycolor("magenta"),
+  YELLOW: tinycolor("yellow"),
+  GRAY: tinycolor("darkgray"), // gray and darkgray are named reversed for some reason
+  DARKGRAY: tinycolor("gray"), // gray and darkgray are named reversed for some reason
+  PURPLE: tinycolor("purple"),
+};
+
+export function setRgba(buffer: Uint8Array, index: number, color: tinycolor) {
+  const rgba255 = color.toRgb();
+  rgba255.a *= 255;
+  buffer[index] = rgba255.r;
+  buffer[index + 1] = rgba255.g;
+  buffer[index + 2] = rgba255.b;
+  buffer[index + 3] = rgba255.a;
+}
 
 // Ported from Rviz' Map palette
 // https://github.com/ros-visualization/rviz/blob/22b81ecfea7ea7ed69e35d537abf6f50c8e5f1d7/src/rviz/default_plugin/map_display.cpp#L284
@@ -110,6 +137,11 @@ export const defaultObstacleGridPalette = (() => {
   buff[buff_index++] = 0x89;  // green
   buff[buff_index++] = 0x86;  // blue
   buff[buff_index++] = 255;   // alpha
+
+  // Override individual colors below
+  // https://github.com/cjds/carl/blob/master/carrack_ros/map_updater/include/impl/controller_costmap_republisher_block.hpp#L40
+  setRgba(buff, 255 * 4, tinycolor("#559d95"));  // -1 UNKNOWN
+  setRgba(buff, 0 * 4, tinycolor.fromRatio({r: 1, g: 1, b: 1, a: 0}));  // 0 FREE SPACE
 
   return buff;
 })();
