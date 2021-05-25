@@ -139,6 +139,7 @@ export const defaultObstacleGridPalette = (() => {
   buff[buff_index++] = 255;   // alpha
 
   // Override individual colors below
+  // You can find the meaning of individual ObstacleGrid values in the link below:
   // https://github.com/cjds/carl/blob/master/carrack_ros/map_updater/include/impl/controller_costmap_republisher_block.hpp#L40
   setRgba(buff, 255 * 4, tinycolor("#559d95"));  // -1 UNKNOWN
   setRgba(buff, 0 * 4, tinycolor.fromRatio({r: 1, g: 1, b: 1, a: 0}));  // 0 FREE SPACE
