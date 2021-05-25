@@ -77,7 +77,7 @@ export const defaultMapPalette = (() => {
 // https://github.com/ros-visualization/rviz/blob/22b81ecfea7ea7ed69e35d537abf6f50c8e5f1d7/src/rviz/default_plugin/map_display.cpp#L322
 export const defaultObstacleGridPalette = (() => {
   const buff = new Uint8Array(256 * 4);
-  const buff_index = 0;
+  let buff_index = 0;
 
   // zero values have alpha=0
   buff[buff_index++] = 0;  // red
