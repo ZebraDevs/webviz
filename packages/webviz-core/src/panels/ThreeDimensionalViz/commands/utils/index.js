@@ -5,69 +5,49 @@
 //  This source code is licensed under the Apache License, Version 2.0,
 //  found in the LICENSE file in the root directory of this source tree.
 //  You may not use this file except in compliance with the License.
-import tinycolor from "tinycolor2";
 
 import type { OccupancyGridMessage } from "webviz-core/src/types/Messages";
 
-export const COLORS = {
-  WHITE: tinycolor("white"),
-  BLACK: tinycolor("black"),
-  RED: tinycolor("red"),
-  PINK: tinycolor("pink"),
-  LIME: tinycolor("lime"),
-  CYAN: tinycolor("cyan"),
-  WHITE: tinycolor("white"),
-  AQUA: tinycolor("aqua"),
-  BLUE: tinycolor("blue"),
-  ORANGE: tinycolor("orange"),
-  MAGENTA: tinycolor("magenta"),
-  YELLOW: tinycolor("yellow"),
-  GRAY: tinycolor("darkgray"), // gray and darkgray are named reversed for some reason
-  DARKGRAY: tinycolor("gray"), // gray and darkgray are named reversed for some reason
-  PURPLE: tinycolor("purple"),
-};
 
-export function setRgba(buffer: Uint8Array, index: number, color: tinycolor) {
-  const rgba255 = color.toRgb();
-  rgba255.a *= 255;
-  buffer[index] = rgba255.r;
-  buffer[index + 1] = rgba255.g;
-  buffer[index + 2] = rgba255.b;
-  buffer[index + 3] = rgba255.a;
-}
-
+// Ported from Rviz' Map palette
+// https://github.com/ros-visualization/rviz/blob/22b81ecfea7ea7ed69e35d537abf6f50c8e5f1d7/src/rviz/default_plugin/map_display.cpp#L284
 export const defaultMapPalette = (() => {
   const buff = new Uint8Array(256 * 4);
+  let buff_index = 0;
 
-  // standard gray map palette values
-  for (let i = 0; i <= 100; i++) {
-    const t = 1 - i / 100;
-    const idx = i * 4;
-    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: t, b: t }));
+  // Standard gray map palette values
+  for (let i = 0; i <= 100; i++)
+  {
+    const v = 255 - (255 * i) / 100;
+    buff[buff_index++] = v;    // red
+    buff[buff_index++] = v;    // green
+    buff[buff_index++] = v;    // blue
+    buff[buff_index++] = 255;  // alpha
   }
 
   // illegal positive values in green
-  for (let i = 101; i <= 127; i++) {
-    const idx = i * 4;
-    setRgba(buff, idx, tinycolor("lime"));
+  for (let i = 101; i <= 127; i++)
+  {
+    buff[buff_index++] = 0;    // red
+    buff[buff_index++] = 255;  // green
+    buff[buff_index++] = 0;    // blue
+    buff[buff_index++] = 255;  // alpha
   }
 
-  // illegal negative (char) values
-  for (let i = 128; i <= 248; i++) {
-    const idx = i * 4;
-    const t = (i - 128) / (254 - 128);
-    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: 0.2, b: 0.6, a: Math.max(1 - t, 0.2) }));
+  // illegal negative (char) values in shades of red/yellow
+  for (let i = 128; i <= 254; i++)
+  {
+    buff[buff_index++] = 255;                              // red
+    buff[buff_index++] = (255 * (i - 128)) / (254 - 128);  // green
+    buff[buff_index++] = 0;                                // blue
+    buff[buff_index++] = 255;                              // alpha
   }
 
-  // legal negative values
-  setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
-  setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 UNDRIVEABLE
-  setRgba(buff, 253 * 4, COLORS.CYAN.setAlpha(0.5)); // -3 SIDEWALK
-  setRgba(buff, 252 * 4, COLORS.YELLOW.setAlpha(0.5)); // -4 UNOBSERVED
-  setRgba(buff, 101 * 4, COLORS.PURPLE.setAlpha(0.5)); // 101 UNOCCUPIED_NULL
-  setRgba(buff, 110 * 4, COLORS.PINK.setAlpha(0.5)); // 110 TRACKED_UNKNOWN_TO_UNOCCUPIED
-  setRgba(buff, 111 * 4, COLORS.LIME.setAlpha(0.5)); // 111 TRACKED_OCCUPIED_TO_UNOCCUPIED
-  setRgba(buff, 112 * 4, COLORS.AQUA.setAlpha(0.5)); // 112 TRACKED_OCCUPIED_TO_UNKNOWN
+  // legal -1 value is tasteful blueish greenish grayish color
+  buff[buff_index++] = 0x70;  // red
+  buff[buff_index++] = 0x89;  // green
+  buff[buff_index++] = 0x86;  // blue
+  buff[buff_index++] = 255;   // alpha
 
   return buff;
 })();
