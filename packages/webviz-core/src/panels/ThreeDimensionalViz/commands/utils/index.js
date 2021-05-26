@@ -36,76 +36,114 @@ export function setRgba(buffer: Uint8Array, index: number, color: tinycolor) {
   buffer[index + 3] = rgba255.a;
 }
 
+// Ported from Rviz' Map palette
+// https://github.com/ros-visualization/rviz/blob/22b81ecfea7ea7ed69e35d537abf6f50c8e5f1d7/src/rviz/default_plugin/map_display.cpp#L284
 export const defaultMapPalette = (() => {
   const buff = new Uint8Array(256 * 4);
+  let buff_index = 0;
 
-  // standard gray map palette values
-  for (let i = 0; i <= 100; i++) {
-    const t = 1 - i / 100;
-    const idx = i * 4;
-    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: t, b: t }));
+  // Standard gray map palette values
+  for (let i = 0; i <= 100; i++)
+  {
+    const v = 255 - (255 * i) / 100;
+    buff[buff_index++] = v;    // red
+    buff[buff_index++] = v;    // green
+    buff[buff_index++] = v;    // blue
+    buff[buff_index++] = 255;  // alpha
   }
 
   // illegal positive values in green
-  for (let i = 101; i <= 127; i++) {
-    const idx = i * 4;
-    setRgba(buff, idx, tinycolor("lime"));
+  for (let i = 101; i <= 127; i++)
+  {
+    buff[buff_index++] = 0;    // red
+    buff[buff_index++] = 255;  // green
+    buff[buff_index++] = 0;    // blue
+    buff[buff_index++] = 255;  // alpha
   }
 
-  // illegal negative (char) values
-  for (let i = 128; i <= 248; i++) {
-    const idx = i * 4;
-    const t = (i - 128) / (254 - 128);
-    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: 0.2, b: 0.6, a: Math.max(1 - t, 0.2) }));
+  // illegal negative (char) values in shades of red/yellow
+  for (let i = 128; i <= 254; i++)
+  {
+    buff[buff_index++] = 255;                              // red
+    buff[buff_index++] = (255 * (i - 128)) / (254 - 128);  // green
+    buff[buff_index++] = 0;                                // blue
+    buff[buff_index++] = 255;                              // alpha
   }
 
-  // legal negative values
-  setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
-  setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 UNDRIVEABLE
-  setRgba(buff, 253 * 4, COLORS.CYAN.setAlpha(0.5)); // -3 SIDEWALK
-  setRgba(buff, 252 * 4, COLORS.YELLOW.setAlpha(0.5)); // -4 UNOBSERVED
-  setRgba(buff, 101 * 4, COLORS.PURPLE.setAlpha(0.5)); // 101 UNOCCUPIED_NULL
-  setRgba(buff, 110 * 4, COLORS.PINK.setAlpha(0.5)); // 110 TRACKED_UNKNOWN_TO_UNOCCUPIED
-  setRgba(buff, 111 * 4, COLORS.LIME.setAlpha(0.5)); // 111 TRACKED_OCCUPIED_TO_UNOCCUPIED
-  setRgba(buff, 112 * 4, COLORS.AQUA.setAlpha(0.5)); // 112 TRACKED_OCCUPIED_TO_UNKNOWN
+  // legal -1 value is tasteful blueish greenish grayish color
+  buff[buff_index++] = 0x70;  // red
+  buff[buff_index++] = 0x89;  // green
+  buff[buff_index++] = 0x86;  // blue
+  buff[buff_index++] = 255;   // alpha
 
   return buff;
 })();
 
 
+// Ported from Rviz's Costmap palette
+// https://github.com/ros-visualization/rviz/blob/22b81ecfea7ea7ed69e35d537abf6f50c8e5f1d7/src/rviz/default_plugin/map_display.cpp#L322
 export const defaultObstacleGridPalette = (() => {
   const buff = new Uint8Array(256 * 4);
+  let buff_index = 0;
 
-  // standard gray map palette values
-  for (let i = 0; i <= 100; i++) {
-    const t = 1 - i / 100;
-    const idx = i * 4;
-    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: t, b: t }));
+  // zero values have alpha=0
+  buff[buff_index++] = 0;  // red
+  buff[buff_index++] = 0;  // green
+  buff[buff_index++] = 0;  // blue
+  buff[buff_index++] = 0;  // alpha
+
+  // Blue to red spectrum for most normal cost values
+  for (let i = 1; i <= 98; i++)
+  {
+    const v = (255 * i) / 100;
+    buff[buff_index++] = v;        // red
+    buff[buff_index++] = 0;        // green
+    buff[buff_index++] = 255 - v;  // blue
+    buff[buff_index++] = 255;      // alpha
   }
+
+  // inscribed obstacle values (99) in cyan
+  buff[buff_index++] = 0;     // red
+  buff[buff_index++] = 255;  // green
+  buff[buff_index++] = 255;  // blue
+  buff[buff_index++] = 255;  // alpha
+
+  // lethal obstacle values (100) in purple
+  buff[buff_index++] = 255;  // red
+  buff[buff_index++] = 0;    // green
+  buff[buff_index++] = 255;  // blue
+  buff[buff_index++] = 255;  // alpha
 
   // illegal positive values in green
-  for (let i = 101; i <= 127; i++) {
-    const idx = i * 4;
-    setRgba(buff, idx, tinycolor("lime"));
+  for (let i = 101; i <= 127; i++)
+  {
+    buff[buff_index++] = 0;    // red
+    buff[buff_index++] = 255;  // green
+    buff[buff_index++] = 0;    // blue
+    buff[buff_index++] = 255;  // alpha
   }
 
-  // illegal negative (char) values
-  for (let i = 128; i <= 248; i++) {
-    const idx = i * 4;
-    const t = (i - 128) / (254 - 128);
-    setRgba(buff, idx, tinycolor.fromRatio({ r: t, g: 0.2, b: 0.6, a: Math.max(1 - t, 0.2) }));
+  // illegal negative (char) values in shades of red/yellow
+  for (let i = 128; i <= 254; i++)
+  {
+    buff[buff_index++] = 255;                              // red
+    buff[buff_index++] = (255 * (i - 128)) / (254 - 128);  // green
+    buff[buff_index++] = 0;                                // blue
+    buff[buff_index++] = 255;                              // alpha
   }
 
-  // legal negative values
+  // legal -1 value is tasteful blueish greenish grayish color
+  buff[buff_index++] = 0x70;  // red
+  buff[buff_index++] = 0x89;  // green
+  buff[buff_index++] = 0x86;  // blue
+  buff[buff_index++] = 255;   // alpha
+
+  // Override individual colors below
+  // You can find the meaning of individual ObstacleGrid values in the link below:
   // https://github.com/cjds/carl/blob/master/carrack_ros/map_updater/include/impl/controller_costmap_republisher_block.hpp#L40
-  setRgba(buff, 255 * 4, COLORS.GRAY.setAlpha(0.5)); // -1 UNKNOWN
-  setRgba(buff, 254 * 4, COLORS.ORANGE.setAlpha(0.5)); // -2 DYNAMIC_OBSTACLE
-  setRgba(buff, 98 * 4, COLORS.CYAN.setAlpha(0.5)); // 98 NEAR_DYNAMIC
-  setRgba(buff, 75 * 4, COLORS.YELLOW.setAlpha(0.5)); // 75 WARNING
-  setRgba(buff, 1 * 4, COLORS.PURPLE.setAlpha(0.5)); // 1 INFLATED_BLUETOOTH
-  setRgba(buff, 100 * 4, COLORS.PINK.setAlpha(0.5)); // 100 Static
-  setRgba(buff, 127 * 4, COLORS.LIME.setAlpha(0.5)); // 127 TRACKED_OCCUPIED_TO_UNOCCUPIED
-  setRgba(buff, 50 * 4, COLORS.AQUA.setAlpha(0.5)); // 50 FLATTENED
+  setRgba(buff, 255 * 4, tinycolor("#559d95"));  // -1 UNKNOWN
+  setRgba(buff, 0 * 4, tinycolor.fromRatio({r: 1, g: 1, b: 1, a: 0}));  // 0 FREE SPACE
+
   return buff;
 })();
 
